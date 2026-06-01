@@ -1,107 +1,234 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Hacker Hub</title>
-
 <style>
-  body {
-    margin: 0;
-    background: black;
-    color: #00ff00;
-    font-family: "Courier New", monospace;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    overflow: hidden;
+  :root{
+    --bg:#020305;
+    --green:#00FF00; /* <- pure neon green */
+    --accent: rgba(0,255,0,0.12);
+    --glow: 0 0 10px rgba(0,255,0,0.18), 0 0 30px rgba(0,255,0,0.06);
   }
 
-  /* scanline effect */
-  body::before {
-    content: "";
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: repeating-linear-gradient(
-      to bottom,
-      rgba(0,255,0,0.05),
-      rgba(0,255,0,0.05) 1px,
-      transparent 1px,
-      transparent 3px
-    );
-    pointer-events: none;
+  /* Reset + layout */
+  *{box-sizing:border-box}
+  html,body{height:100%; margin:0; background:var(--bg); color:var(--green); font-family: "Courier New","Lucida Console","Monaco",monospace; -webkit-font-smoothing:antialiased;}
+  #matrix{ position:fixed; inset:0; z-index:0; display:block; background:transparent; }
+
+  /* Subtle vignette + CRT scanlines + noise flicker layer */
+  .overlay{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:1;
+  }
+  .overlay::before{
+    /* vignette */
+    content:"";
+    position:absolute; inset:0;
+    background:
+      radial-gradient(1200px 600px at 50% 30%, rgba(0,255,0,0.02), transparent 10%),
+      linear-gradient(180deg, rgba(0,0,0,0.1), transparent 30%);
+    mix-blend-mode:screen;
+    opacity:0.9;
+  }
+  .overlay::after{
+    /* scanlines + noise + flicker */
+    content:"";
+    position:absolute; inset:0;
+    background:
+      repeating-linear-gradient(180deg, rgba(0,0,0,0.02) 0 1px, transparent 1px 3px),
+      linear-gradient(180deg, rgba(0,255,0,0.015), rgba(0,255,0,0.002));
+    mix-blend-mode: overlay;
+    opacity:0.9;
+    animation: subtleFlicker 6s infinite steps(3, end);
+  }
+  @keyframes subtleFlicker {
+    0% { opacity:0.92; transform:translateZ(0); }
+    50% { opacity:0.98; }
+    100% { opacity:0.92; }
   }
 
-  h1 {
-    font-size: 40px;
-    text-shadow: 0 0 10px #00ff00;
-    margin-bottom: 10px;
+  /* Page content on top */
+  .wrap{
+    position:relative;
+    z-index:2;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:2rem;
   }
 
-  h3 {
-    font-size: 20px;
-    opacity: 0.8;
-    margin-bottom: 40px;
+  .panel{
+    display:flex;
+    gap:1rem;
+    align-items:center;
+    justify-content:center;
+    flex-wrap:wrap;
+    backdrop-filter: blur(6px) saturate(1.1);
+    background: linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.22));
+    border-radius:12px;
+    padding:1rem 1.25rem;
+    border:1px solid rgba(0,255,0,0.06);
+    box-shadow: 0 8px 40px rgba(1,1,1,0.6), var(--glow);
+    transform: translateZ(0);
   }
 
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(3, 140px);
-    gap: 30px;
+  /* Hacker buttons */
+  .hacker-btn {
+    position:relative;
+    display:inline-flex;
+    align-items:center;
+    gap:.6rem;
+    padding:.85rem 1.4rem;
+    border-radius:8px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.22), rgba(0,0,0,0.35));
+    color:var(--green);
+    text-decoration:none;
+    border:1px solid rgba(0,255,0,0.15);
+    box-shadow: var(--glow);
+    cursor:pointer;
+    transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+    user-select:none;
+    outline: none;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  button {
-    width: 140px;
-    height: 70px;
-    background: black;
-    border: 2px solid #00ff00;
-    color: #00ff00;
-    font-family: monospace;
-    cursor: pointer;
-    transition: 0.2s;
-    box-shadow: 0 0 10px #00ff00;
+  .hacker-btn:hover{
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 0 0 18px rgba(0,255,0,0.22), 0 0 60px rgba(0,255,0,0.06);
+    filter:brightness(1.06);
   }
 
-  button:hover {
-    background: #00ff00;
-    color: black;
-    box-shadow: 0 0 25px #00ff00;
-    animation: glitch 0.2s infinite;
+  .hacker-btn:active{ transform: translateY(-1px) scale(.995); }
+
+  .hacker-btn .icon{
+    display:inline-grid;
+    width:24px; height:24px;
+    place-items:center;
+    background: linear-gradient(180deg, rgba(0,255,0,0.06), rgba(0,255,0,0.02));
+    border-radius:4px;
+    border:1px solid rgba(0,255,0,0.08);
+    box-shadow: inset 0 -6px 14px rgba(0,0,0,0.28);
+    font-size:12px;
   }
 
-  @keyframes glitch {
-    0%   { transform: scale(1.5) translate(0,0); }
-    25%  { transform: scale(1.2) translate(-1px,1px); }
-    50%  { transform: scale(1.3) translate(1px,-1px); }
-    75%  { transform: scale(1.4) translate(-1px,-1px); }
-    100% { transform: scale(1.3) translate(0,0); }
+  .hacker-btn span{
+    position:relative;
+    color:var(--green);
+    text-shadow: 0 0 6px rgba(0,255,0,0.22), 0 0 14px rgba(0,255,0,0.08);
   }
 
+  /* stronger glitch & flicker */
+  .glitch { overflow:visible; position:relative; }
+  .glitch::before, .glitch::after{
+    content:attr(data-text);
+    position:absolute;
+    left:0; top:0;
+    width:100%; height:100%;
+    pointer-events:none;
+    mix-blend-mode: screen;
+    opacity:0.9;
+  }
+  .glitch::before { color: rgba(0,255,0,0.62); transform:translateX(-2px); clip-path: polygon(0 0,100% 0,100% 40%,0 45%); animation: glitch1 2.2s infinite linear; }
+  .glitch::after  { color: rgba(0,200,0,0.62); transform:translateX(2px);  clip-path: polygon(0 50%,100% 45%,100% 100%,0 100%); animation: glitch2 2.6s infinite linear; }
+  @keyframes glitch1 { 0%{transform:translateX(-2px)} 50%{transform:translateX(0)} 100%{transform:translateX(-2px)} }
+  @keyframes glitch2 { 0%{transform:translateX(2px)} 50%{transform:translateX(0)} 100%{transform:translateX(2px)} }
+
+  /* blinking cursor/label for extra terminal feel */
+  .terminal-hint{
+    font-size:0.78rem;
+    color: rgba(0,255,0,0.6);
+    display:block;
+    text-align:center;
+    margin-top:.5rem;
+    letter-spacing:0.02em;
+  }
+  .cursor { display:inline-block; width:.6ch; background:var(--green); margin-left:.35ch; animation: blink 800ms steps(1) infinite; vertical-align:middle; height:1em; opacity:0.85; }
+  @keyframes blink { 0%,50%{ opacity:1 } 51%,100%{ opacity:0 } }
+
+  /* focus styles for keyboard users */
+  .hacker-btn:focus{
+    box-shadow: 0 0 18px rgba(0,255,0,0.22), 0 0 80px rgba(0,255,0,0.06), 0 0 0 3px rgba(0,255,0,0.06);
+    outline: none;
+  }
+
+  /* responsive */
+  @media (max-width:520px){
+    .panel{ gap:.6rem; padding:.8rem; }
+    .hacker-btn{ padding:.65rem 1rem; font-size:.95rem; }
+  }
 </style>
 </head>
-
 <body>
+  <!-- Matrix canvas (behind content) -->
+  <canvas id="matrix" aria-hidden="true"></canvas>
 
-<h1>ACCESS TERMINAL</h1>
-<h3>let blankButtons === comingSoonProjects;</h3>
+  <!-- overlay for scanlines/noise -->
+  <div class="overlay" aria-hidden="true"></div>
 
-<div class="grid">
+  <div class="wrap">
+    <div class="panel" role="region" aria-label="Hacker navigation">
+      <a class="hacker-btn" href="/calculator" target="_blank" rel="noopener noreferrer" aria-label="Open Calculator in new tab">
+        <span class="icon">&gt;_</span>
+        <span>Calculator</span>
+      </a>
 
-  <button onclick="location.href='/calculator'">Calculator</button>
-  <button onclick="location.href='/neon-box-world'">Neon box world</button>
-  <button onclick="location.href='#'"></button>
+      <a class="hacker-btn glitch" href="/neon-box-world" data-text="NEON BOX WORLD" target="_blank" rel="noopener noreferrer" aria-label="Open Neon box world in new tab">
+        <span class="icon">#</span>
+        <span>Neon box world</span>
+      </a>
 
-  <button onclick="location.href='#'"></button>
-  <button onclick="location.href='#'"></button>
-  <button onclick="location.href='#'"></button>
+      <div style="width:100%; text-align:center; margin-top:6px;">
+        <span class="terminal-hint">press button to launch <span class="cursor" aria-hidden="true"></span></span>
+      </div>
+    </div>
+  </div>
 
-  <button onclick="location.href='#'"></button>
-  <button onclick="location.href='#'"></button>
-  <button onclick="location.href='#'"></button>
+<script>
+  // Matrix effect canvas (binary 0/1, with rare cats)
+  (function matrixInit(){
+    const canvas = document.getElementById('matrix');
+    const ctx = canvas.getContext('2d');
+    let w = canvas.width = innerWidth;
+    let h = canvas.height = innerHeight;
 
-</div>
+    // Binary-only characters
+    const letters = '01';
+    const CAT = '🐱';
+    const CAT_CHANCE = 1 / 1000; // 1/1000 chance for a cat
+    const fontSize = Math.max(12, Math.floor(Math.min(w, h) / 60)); // scale font to screen
+    const columns = Math.floor(w / fontSize) + 1;
+    const drops = new Array(columns).fill(1);
 
-</body>
-</html>
+    ctx.font = fontSize + "px monospace";
+
+    function draw(){
+      // translucent background to create trail (lower alpha -> longer trails)
+      ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
+      ctx.fillRect(0, 0, w, h);
+
+      // green glow
+      ctx.shadowColor = "rgba(0,255,0,0.15)";
+      ctx.shadowBlur = 6;
+
+      for(let i=0;i<drops.length;i++){
+        // decide character: cat rarely, otherwise 0 or 1
+        let text;
+        const r = Math.random();
+        let isCat = false;
+        if(r < CAT_CHANCE){
+          text = CAT;
+          isCat = true;
+        } else {
+          text = letters.charAt(Math.random() < 0.5 ? 0 : 1);
+        }
+
+        const x = i * fontSize;
+        const y =*
