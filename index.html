@@ -6,32 +6,88 @@
   <title>My Portfolio</title>
   <style>
     :root{
+      /* UI / panel */
       --glass-tint: 225,241,255;
       --text: 20,24,28;
       --muted: 95,100,110;
       --accent: 59,130,246;
       --radius: 14px;
       --glass-blur: 10px;
+
+      /* Gradient color stops */
+      --g1: #062a78;           /* dark blue */
+      --g2: rgb(0,150,0);      /* dark green */
+      --g3: #2b006f;           /* dark violet */
+      --g4: #000000;           /* black */
+
+      /* Positioning of the green stop (percentage) */
+      --green-pos: 28%;
+
+      /* Animation duration (seconds) - set to 20s */
+      --gradient-duration: 20s;
+
+      /* Control produced layer size (affects smoothness vs memory) */
+      --gradient-scale: 220%;
     }
 
-    *{box-sizing:border-box}
-    html,body{height:100%}
+    * { box-sizing: border-box; }
+    html,body { height: 100%; }
     body{
       margin:0;
-      font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
-      color:rgb(var(--text));
-      /* Stretch the local GIF (mona-happy.gif) to cover the viewport */
-      background: url("./mona-happy.gif") center/cover no-repeat;
-      /* fallback color while image loads or if missing */
-      background-color: rgb(180,220,255);
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      color: rgb(var(--text));
       -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
       display:flex;
       align-items:center;
       justify-content:center;
       padding:2rem;
+      position:relative;
+      overflow-x:hidden;
+
+      /* fallback background color while layer loads */
+      background-color: var(--g1);
     }
 
-    .bg-blob{position:fixed; inset:0; z-index:-2; overflow:hidden; pointer-events:none;}
+    /* Gradient layer: vertical gradient + transform animation (GPU-friendly) */
+    .gradient-layer {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      width: var(--gradient-scale);
+      height: var(--gradient-scale);
+      transform: translate(-50%, -50%) translateY(0); /* base transform */
+      z-index: -3;
+      pointer-events: none;
+
+      /* vertical gradient (top -> bottom) using CSS variables */
+      background: linear-gradient(180deg,
+        var(--g1) 0%,
+        var(--g2) var(--green-pos),
+        var(--g3) 62%,
+        var(--g4) 100%);
+
+      will-change: transform;
+      backface-visibility: hidden;
+    }
+
+    /* animate translateY for vertical motion */
+    @keyframes gradient-slide-vertical {
+      0%   { transform: translate(-50%, -50%) translateY(-18%); }
+      50%  { transform: translate(-50%, -50%) translateY(18%); }
+      100% { transform: translate(-50%, -50%) translateY(-18%); }
+    }
+
+    .gradient-layer.animate {
+      animation: gradient-slide-vertical var(--gradient-duration) linear infinite;
+    }
+
+    /* Respect reduced motion preference */
+    @media (prefers-reduced-motion: reduce) {
+      .gradient-layer.animate { animation: none; transform: translate(-50%, -50%) translateY(0); }
+    }
+
+    .bg-blob{ position:fixed; inset:0; z-index:-2; overflow:hidden; pointer-events:none; }
     .bg-blob::after{
       content:"";
       position:absolute;
@@ -39,21 +95,24 @@
       background:
         radial-gradient(circle at 10% 20%, rgba(var(--accent),0.06), transparent 12%),
         radial-gradient(circle at 80% 80%, rgba(var(--accent),0.03), transparent 12%);
-      animation: float 14s linear infinite;
       filter: blur(36px);
       opacity:0.9;
+      animation: float 14s linear infinite;
+      will-change: transform;
     }
-    @keyframes float{ from{transform:translateY(0) rotate(0)} to{transform:translateY(-6%) rotate(360deg)} }
+    @keyframes float { from { transform: translateY(0) rotate(0); } to { transform: translateY(-6%) rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      .bg-blob::after { animation: none; transform: none; }
+    }
 
     .wrap{ width:min(920px,96%); text-align:center; display:grid; gap:1.25rem; align-items:start; }
-
-    h1{ margin:0; font-size:clamp(1.6rem, 3.6vw, 2.4rem); font-weight:700; color:rgb(var(--text)); }
-
+    h1{ margin:0; font-size:clamp(1.6rem, 3.6vw, 2.4rem); font-weight:700; color:#ffffff;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.45); }
     .card{
       margin-top:0.6rem;
       border-radius:var(--radius);
       padding:1.25rem;
-      background:linear-gradient(180deg, rgba(var(--glass-tint),0.92), rgba(var(--glass-tint),0.84));
+      background: linear-gradient(180deg, rgba(var(--glass-tint),0.92), rgba(var(--glass-tint),0.84));
       border:1px solid rgba(var(--accent),0.10);
       box-shadow: 0 10px 28px rgba(var(--accent),0.04);
       backdrop-filter: blur(var(--glass-blur)) saturate(120%);
@@ -66,113 +125,59 @@
       margin-left:auto;
       margin-right:auto;
     }
-
     .card h2{ margin:0; font-size:1.05rem; font-weight:600; color:rgb(var(--text)); }
-
     .actions{ display:flex; gap:0.75rem; flex-wrap:wrap; justify-content:center; margin-top:0.2rem; }
 
-    /* Button base */
     .btn{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:0.5rem;
-      padding:0.6rem 0.9rem;
-      border-radius:10px;
-      font-weight:600;
-      text-decoration:none;
-      border:1px solid rgba(16,24,40,0.08);
-      background: rgba(255,255,255,0.94);
-      color:rgb(var(--text));
-      cursor:pointer;
-      transition:transform .18s cubic-bezier(.2,.9,.3,1), box-shadow .18s ease, background-color .12s ease, color .12s ease;
-      min-width:110px;
-      will-change:transform,box-shadow;
-      box-shadow: 0 6px 18px rgba(16,24,40,0.06);
+      display:inline-flex; align-items:center; justify-content:center; gap:0.5rem;
+      padding:0.6rem 0.9rem; border-radius:10px; font-weight:600; text-decoration:none;
+      border:1px solid rgba(16,24,40,0.08); background: rgba(255,255,255,0.94);
+      color:rgb(var(--text)); cursor:pointer;
+      transition:transform .18s cubic-bezier(.2,.9,.3,1), box-shadow .18s ease;
+      min-width:110px; will-change:transform,box-shadow; box-shadow: 0 6px 18px rgba(16,24,40,0.06);
     }
-    .btn:active{ transform:translateY(1px) }
-
-    /* Primary (project) buttons */
+    .btn:active{ transform:translateY(1px); }
     .btn-primary{
       background: linear-gradient(90deg, rgba(var(--accent),0.98), rgba(var(--accent),0.88));
       border-color: rgba(var(--accent),0.95);
-      color: white;
-      box-shadow: 0 10px 28px rgba(59,130,246,0.18);
+      color:white; box-shadow: 0 10px 28px rgba(59,130,246,0.18);
     }
-
-    /* Hover/focus for active buttons: grow & lift */
-    .btn-primary:not([disabled]):hover,
-    .btn-primary:not([disabled]):focus-visible{
-      transform: translateY(-6px) scale(1.06);
-      box-shadow: 0 28px 64px rgba(16,24,40,0.14);
-    }
-
-    .btn:not([disabled]):hover,
-    .btn:not([disabled]):focus-visible{
-      transform: translateY(-4px) scale(1.02);
-      box-shadow: 0 18px 46px rgba(16,24,40,0.12);
-    }
-
-    /* Disabled state using native disabled attribute */
-    .btn[disabled]{
-      opacity:0.85;
-      cursor:not-allowed;
-      /* allow hover visuals while keeping control disabled */
-      pointer-events:auto;
-      filter:grayscale(.02);
-      transform:none;
-      background: rgba(255,255,255,0.86);
-      color: rgba(var(--muted),1);
-      border:1px solid rgba(16,24,40,0.04);
-      box-shadow: none;
-      transition: background-color .12s ease, color .12s ease, transform .12s ease;
-    }
-
-    /* Coming Soon hover visual (red) for disabled buttons */
-    .btn[disabled]:hover{
-      background: rgb(255,0,0);
-      color: white;
-      border-color: rgb(200,0,0);
-      transform: translateY(-3px) scale(1.01);
-      box-shadow: 0 14px 36px rgba(255,0,0,0.12);
-    }
-
-    .btn:focus-visible{
-      outline:3px solid rgba(var(--accent),0.18);
-      outline-offset:4px;
-    }
+    .btn[disabled]{ opacity:0.85; cursor:not-allowed; pointer-events:auto; filter:grayscale(.02); transform:none;
+      background: rgba(255,255,255,0.86); color: rgba(var(--muted),1); border:1px solid rgba(16,24,40,0.04); box-shadow:none; }
+    .btn[disabled]:hover{ background: rgb(255,0,0); color: white; border-color: rgb(200,0,0); }
 
     @media (max-width:420px){
-      .actions{gap:0.5rem}
-      .btn{min-width:92px; padding:0.55rem 0.7rem}
-    }
-
-    @media (prefers-reduced-motion: reduce){
-      .bg-blob::after, .btn, .card { transition: none; animation: none; transform: none; box-shadow: none; }
+      .actions{ gap:0.5rem }
+      .btn{ min-width:92px; padding:0.55rem 0.7rem }
     }
   </style>
 </head>
 <body>
+  <div class="gradient-layer animate" aria-hidden="true"></div>
+
   <div class="bg-blob" aria-hidden="true"></div>
 
-  <main class="wrap" role="main">
-    <h1>My Portfolio</h1>
+  <main class="wrap" role="main" aria-labelledby="main-title">
+    <h1 id="main-title">My Portfolio</h1>
 
     <section class="card" aria-labelledby="card-title">
       <h2 id="card-title">Welcome</h2>
 
       <div class="actions" id="projects" role="group" aria-label="Portfolio links">
-        <!-- Buttons will be rendered here by JavaScript -->
+        <!-- Buttons rendered by JS -->
       </div>
     </section>
   </main>
 
   <script>
+    // 4 real projects + 8 "Coming Soon" placeholders (you can increase/decrease easily)
     const projects = [
       { title: "Calculator", href: "/calculator" },
       { title: "Neon Box World", href: "/neon-box-world" },
       { title: "My first Website", href: "/my_first_website" },
       { title: "Jubilee generator", href: "/jubilee-generator" },
+
+      // Coming Soon placeholders (8)
       { title: "Coming Soon", disabled: true },
       { title: "Coming Soon", disabled: true },
       { title: "Coming Soon", disabled: true },
@@ -186,12 +191,11 @@
     function renderProjects() {
       const container = document.getElementById('projects');
       container.innerHTML = '';
-      projects.forEach((p) => {
+      projects.forEach(p => {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'btn' + (p.disabled ? '' : ' btn-primary');
         btn.textContent = p.title;
-
         if (!p.disabled && p.href) {
           btn.setAttribute('aria-label', `${p.title} (opens in new tab)`);
           btn.addEventListener('click', () => {
@@ -209,14 +213,40 @@
         container.appendChild(btn);
       });
     }
-
     renderProjects();
 
-    function addProject(obj) {
-      projects.push(obj);
-      renderProjects();
+    /* Runtime gradient controls (unchanged) */
+    const root = document.documentElement;
+    const grad = document.querySelector('.gradient-layer');
+
+    function setSpeed(seconds) {
+      if (!seconds || seconds <= 0) return;
+      root.style.setProperty('--gradient-duration', `${seconds}s`);
     }
-    window.addProject = addProject;
+
+    function pauseGradient() {
+      grad.classList.remove('animate');
+      grad.style.animationPlayState = 'paused';
+    }
+
+    function resumeGradient() {
+      grad.classList.add('animate');
+      grad.style.animationPlayState = 'running';
+    }
+
+    function setGreenStop(value) {
+      let normalized = value;
+      if (typeof value === 'number') {
+        if (value <= 1) normalized = `${value * 100}%`;
+        else normalized = `${value}%`;
+      }
+      root.style.setProperty('--green-pos', normalized);
+    }
+
+    window.setSpeed = setSpeed;
+    window.pauseGradient = pauseGradient;
+    window.resumeGradient = resumeGradient;
+    window.setGreenStop = setGreenStop;
   </script>
 </body>
 </html>
