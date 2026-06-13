@@ -20,10 +20,8 @@
       margin:0;
       font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
       color:rgb(var(--text));
-      /* Background image (local file). Keeps a light translucent overlay for contrast. */
-      background:
-        linear-gradient(rgba(255,255,255,0.32), rgba(255,255,255,0.18)),
-        url("windows-10.png") center/cover no-repeat fixed;
+      /* Stretch the local GIF (mona-happy.gif) to cover the viewport */
+      background: url("./mona-happy.gif") center/cover no-repeat;
       /* fallback color while image loads or if missing */
       background-color: rgb(180,220,255);
       -webkit-font-smoothing:antialiased;
@@ -170,18 +168,11 @@
   </main>
 
   <script>
-    /*************************************************************************
-     * Projects array:
-     * - To add/remove a project, edit this array. Each entry is one line.
-     * - Enabled project example: { title: "New Project", href: "/new-project" }
-     * - Disabled (Coming Soon) example: { title: "Future Project", disabled: true }
-     *************************************************************************/
     const projects = [
       { title: "Calculator", href: "/calculator" },
       { title: "Neon Box World", href: "/neon-box-world" },
       { title: "My first Website", href: "/my_first_website" },
       { title: "Jubilee generator", href: "/jubilee-generator" },
-      // Coming soon entries (disabled). To remove, delete the line.
       { title: "Coming Soon", disabled: true },
       { title: "Coming Soon", disabled: true },
       { title: "Coming Soon", disabled: true },
@@ -219,10 +210,8 @@
       });
     }
 
-    // initial render
     renderProjects();
 
-    // helper to add a project and re-render
     function addProject(obj) {
       projects.push(obj);
       renderProjects();
